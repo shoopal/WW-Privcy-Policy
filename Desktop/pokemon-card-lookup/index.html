@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pokémon Card Lookup</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 600px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    select, input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .result {
+      background-color: #f9f9f9;
+      padding: 15px;
+      border-radius: 4px;
+      margin-top: 10px;
+      border: 1px solid #ddd;
+    }
+    .loading {
+      text-align: center;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Pokémon Card Lookup</h1>
+    <form id="cardForm">
+      <label for="setCode">Select Set:</label>
+      <select id="setCode">
+        <option value="base1">Base Set</option>
+        <option value="base2">Jungle</option>
+      </select>
+
+      <label for="cardNameInput">Enter Card Name:</label>
+      <input type="text" id="cardNameInput" required placeholder="e.g., Charizard" />
+
+      <button type="submit">Lookup Card</button>
+    </form>
+    <div id="loading" class="loading">Loading card data...</div>
+    <div id="cardInfo" class="result" style="display:none;"></div>
+  </div>
+
+  <script>
+    async function getCardData(cardName, setCode) {
+      try {
+        const response = await fetch("/.netlify/functions/getCardData", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cardName, setCode }) // Changed to send cardName
+        });
+        const data = await response.json();
+        displayCardData(data);
+      } catch (error) {
+        console.error("Error fetching card data:", error);
+      }
+    }
+
+    function displayCardData(data) {
+      const cardInfo = document.getElementById('cardInfo');
+      if (data.data && data.data.length > 0) {
+        const card = data.data[0];
+        cardInfo.innerHTML = `<p><strong>Name:</strong> ${card.name}</p>
+                              <p><strong>Set:</strong> ${card.set.name}</p>
+                              <p><strong>Price:</strong> $${card.tcgplayer?.prices?.market || "N/A"}</p>`;
+        cardInfo.style.display = 'block';
+      } else {
+        alert("Card not found.");
+      }
+    }
+
+    document.getElementById("cardForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+      const cardName = document.getElementById("cardNameInput").value.trim();
+      const setCode = document.getElementById("setCode").value;
+      getCardData(cardName, setCode);
+    });
+  </script>
+</body>
+</html>
